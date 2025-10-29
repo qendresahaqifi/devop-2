@@ -1,0 +1,54 @@
+name: CI - Build, Lint, and Smoke Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-lint-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # - CHECKOUT 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # - SET UP NODE
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # - INSTALL DEPENDENCIES 
+      - name: Install dependencies
+        run: npm install
+        working-directory: app
+
+      # - LINT NODE CODE
+      - name: Run ESLint (code quality check)
+        run: |
+          npx eslint . || true
+        working-directory: app
+
+      # - LINT DOCKERFILE
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+
+      # - RUN APP & SMOKE TEST
+      - name: Start app in background
+        run: |
+          node app.js &
+          sleep 3
+        working-directory: app
+
+      - name: Run smoke test
+        run: curl -f http://localhost:3000/health
+        working-directory: app
+
+      # - BUILD DOCKER IMAGE
+      - name: Build Docker image
+        run: docker build -t devops2-app .
