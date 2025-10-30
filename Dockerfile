@@ -1,4 +1,4 @@
-Stage 1 - Build
+# Stage 1 - Build
 
 FROM node:20-alpine AS builder
 
@@ -11,7 +11,7 @@ RUN npm install
 COPY app .
 
 
-Stage 2 - Production
+# Stage 2 - Production
 
 FROM node:20-alpine
 
