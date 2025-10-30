@@ -11,44 +11,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - CHECKOUT 
+      # CHECKOUT
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - SET UP NODE
+      # SET UP NODE
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # - INSTALL DEPENDENCIES 
+      # INSTALL DEPENDENCIES
       - name: Install dependencies
         run: npm install
         working-directory: app
 
-      # - LINT NODE CODE
+      # LINT NODE CODE
       - name: Run ESLint (code quality check)
         run: |
           npx eslint . || true
         working-directory: app
 
-      # - LINT DOCKERFILE
+      # LINT DOCKERFILE
       - name: Lint Dockerfile
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
 
-      # - RUN APP & SMOKE TEST
+      # RUN APP & SMOKE TEST
       - name: Start app in background
+        working-directory: app
         run: |
-          node app.js &
-          sleep 3
-        working-directory: app
+          nohup node app.js > server.log 2>&1 &
+          echo "Waiting for server to start..."
+          sleep 5
+          curl -f http://localhost:3000/health || (echo "Health check failed" && cat server.log && exit 1)
 
-      - name: Run smoke test
-        run: curl -f http://localhost:3000/health
-        working-directory: app
-
-      # - BUILD DOCKER IMAGE
+      # BUILD DOCKER IMAGE
       - name: Build Docker image
         run: docker build -t devops2-app .
